@@ -1,0 +1,169 @@
+version: "3.1" 
+
+services: 
+
+    bgeneral-zabbix-server: 
+
+      restart: always 
+
+      image: imgprod.artifactory.bgeneral.com/zabbix/zabbix-server-mysql:centos-5.0.3 
+
+      hostname: bgeneral-zabbix-server 
+
+      ports: 
+
+      - "10050:10050" 
+
+      - "10051:10051" 
+
+      volumes: 
+
+       - zabbix-server:/etc/zabbix:rw 
+
+       - /etc/localtime:/etc/localtime:ro 
+
+      environment: 
+
+        DB_SERVER_HOST: bgeneral-zabbix-bd 
+
+        MYSQL_USER: root 
+
+        MYSQL_PASSWORD: password1 
+
+      networks: 
+
+         - devops-network 
+
+ 
+
+    bgeneral-zabbix-web: 
+
+      restart: always 
+
+      image: imgprod.artifactory.bgeneral.com/zabbix/zabbix-web-nginx-mysql:centos-5.0.3 
+
+      hostname: bgeneral-zabbix-web 
+
+      ports: 
+
+        - "10080:80" 
+
+        - "10081:8080" 
+
+      volumes: 
+
+       - /etc/localtime:/etc/localtime:ro 
+
+      environment: 
+
+        DB_SERVER_HOST: bgeneral-zabbix-bd 
+
+        MYSQL_USER: root 
+
+        MYSQL_PASSWORD: password1 
+
+        ZBX_SERVER_HOST: bgeneral-zabbix-server 
+
+        PHP_TZ: America/Panama 
+
+      networks: 
+
+         - devops-network 
+
+ 
+
+networks: 
+
+  devops-network: 
+
+      external: 
+
+          name: devops-network 
+
+ 
+
+volumes: 
+
+  zabbix-server: 
+
+      external: true 
+
+  zabbix-web: 
+
+      external: true 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+Zabbix database 
+
+ 
+
+version: '3.1' 
+
+services: 
+
+ 
+
+  bgeneral-zabbix-bd: 
+
+       container_name: bgeneral-zabbix-bd 
+
+       image: imgprod.artifactory.bgeneral.com/mariadb:latest 
+
+       hostname: bgeneral-zabbix-bd 
+
+       ports: 
+
+        - "3316:3306" 
+
+       volumes: 
+
+        - zabbix-db:/var/lib/mysql:rw 
+
+        - /etc/localtime:/etc/localtime:ro 
+
+       environment: 
+
+         - MYSQL_ROOT_PASSWORD=password1 
+
+       logging: 
+
+        driver: json-file 
+
+        options: 
+
+          max-size: "100m" 
+
+          max-file: "3" 
+
+          labels: "bgeneral-zabbix-bd" 
+
+       networks: 
+
+         - devops-network 
+
+ 
+
+networks: 
+
+ devops-network: 
+
+    external: 
+
+        name: devops-network 
+
+ 
+
+volumes: 
+
+ zabbix-db: 
+
+    external: true 
