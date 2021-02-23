@@ -1,0 +1,22 @@
+version: "3.1" 
+
+services: 
+
+  tomcat: 
+      restart: always 
+      image: apache-sample-3
+      hostname: tomcat
+      ports: 
+      - "7070:8080"
+      - "12345:12345" 
+      volumes: 
+       - /etc/localtime:/etc/localtime:ro 
+
+      networks: 
+         - devops-network 
+
+
+networks:
+  devops-network:
+    external: true
+
