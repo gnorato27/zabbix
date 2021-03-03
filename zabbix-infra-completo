@@ -1,0 +1,111 @@
+version: "3.1" 
+
+services: 
+
+  bgeneral-zabbix-server: 
+      restart: always
+      namecontainer_name: bgeneral-zabbix-server 
+      image: zabbix/zabbix-server-mysql:centos-5.0-latest
+      hostname: bgeneral-zabbix-server 
+      ports: 
+      - "10050:10050" 
+      - "10051:10051" 
+      volumes: 
+       - zabbix-server:/etc/zabbix:rw 
+       - /etc/localtime:/etc/localtime:ro 
+      environment: 
+        DB_SERVER_HOST: bgeneral-zabbix-bd 
+        MYSQL_USER: zabbix 
+        MYSQL_PASSWORD: password1 
+        ZBX_JAVAGATEWAY: bgeneral-zabbix-java-gw1
+      networks: 
+         - devops-network 
+
+  bgeneral-zabbix-web: 
+      restart: always
+      container_name: bgeneral-zabbix-web
+      image: zabbix/zabbix-web-apache-mysql:5.0-centos-latest  
+      hostname: bgeneral-zabbix-web 
+      ports: 
+        - "10080:80" 
+        - "10081:8080" 
+      volumes: 
+       - /etc/localtime:/etc/localtime:ro 
+      environment: 
+        DB_SERVER_HOST: bgeneral-zabbix-bd 
+        MYSQL_USER: zabbix
+        MYSQL_PASSWORD: password1 
+        ZBX_SERVER_HOST: bgeneral-zabbix-server 
+        PHP_TZ: America/Panama 
+      networks: 
+         - devops-network 
+
+  bgeneral-zabbix-bd:
+      restart: always
+      container_name: bgeneral-zabbix-bd 
+      image: mariadb
+      hostname: bgeneral-zabbix-bd
+      command: mysqld --character-set-server=utf8 --collation-server=utf8_bin 
+      ports: 
+        - "3316:3306" 
+      volumes: 
+        - zabbix-db:/var/lib/mysql:rw 
+        - /etc/localtime:/etc/localtime:ro 
+      environment: 
+         - MYSQL_ROOT_PASSWORD=root
+         - MYSQL_USER=zabbix
+         - MYSQL_PASSWORD=password1
+         - MYSQL_DATABASE=zabbix
+      logging: 
+        driver: json-file 
+        options: 
+          max-size: "100m" `
+          max-file: "3" 
+          labels: "bgeneral-zabbix-bd" 
+      networks: 
+         - devops-network 
+
+  
+  bgeneral_zabbix_agent: 
+      restart: always
+      container_name: bgeneral_zabbix_agent
+      image: zabbix/zabbix-agent:5.0-centos-latest
+      hostname: bgeneral_zabbix_agent
+      volumes: 
+        - /etc/localtime:/etc/localtime:ro 
+      networks: 
+        - devops-network 
+      environment:
+        - ZBX_SERVER_HOST=bgeneral-zabbix-server
+        - ZBX_HOSTNAME=bgeneral_zabbix_agent
+        - TERM=vt100
+        - TZ=America/Panama
+
+
+
+  bgeneral-zabbix-java-gw: 
+      restart: always 
+      image: zabbix/zabbix-java-gateway:centos-5.0-latest
+      hostname: bgeneral-zabbix-java-gw
+      ports: 
+      - "10052:10052" 
+      volumes: 
+       - /etc/localtime:/etc/localtime:ro 
+      environment: 
+        ZBX_DEBUGLEVEL: info
+        ZBX_START_POLLERS: 5
+
+      networks: 
+         - devops-network 
+
+networks:
+  devops-network:
+    external: true
+
+volumes: 
+  zabbix-server: 
+      external: true 
+  zabbix-web: 
+      external: true 
+  zabbix-db: 
+      external: true
